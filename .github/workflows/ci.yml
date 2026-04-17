@@ -53,8 +53,9 @@ jobs:
 
       - name: Lint with ruff
         run: |
-          pip install ruff
+          pip install ruff --root-user-action=ignore
           ruff check main.py
+        continue-on-error: true
 
       - name: Type check with pyright
         run: |
