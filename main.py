@@ -4,15 +4,12 @@ import socket
 import sys
 import threading
 import warnings
+from typing import TYPE_CHECKING
 
 import decky
 
-try:
-    from pyftpdlib.authorizers import DummyAuthorizer
-    from pyftpdlib.handlers import FTPHandler
+if TYPE_CHECKING:
     from pyftpdlib.servers import FTPServer
-except ImportError:
-    pass
 
 PY_MODULES_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), "py_modules")
 
