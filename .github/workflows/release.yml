@@ -1,0 +1,45 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: latest
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Build frontend
+        run: pnpm build
+
+      - name: Create plugin zip
+        run: |
+          mkdir -p decky-ftpd-dist/decky-ftpd
+          cp main.py plugin.json package.json decky-ftpd-dist/decky-ftpd/
+          cp -r dist decky-ftpd-dist/decky-ftpd/dist
+          cp -r py_modules decky-ftpd-dist/decky-ftpd/py_modules
+          cd decky-ftpd-dist && zip -r ../decky-ftpd.zip decky-ftpd/
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: decky-ftpd.zip
+          body_path: CHANGELOG.md

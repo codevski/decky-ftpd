@@ -1,56 +1,111 @@
 # decky-ftpd
 
-> An FTP server for Steam Deck Game Mode — no desktop required.  
+![logo](assets/logo.png)
+
+> Transfer files to and from your Steam Deck over Wi-Fi — directly from Game Mode, no desktop required.  
 > Inspired by ftpd on PSP / PS Vita.
+
+---
 
 ## Features
 
-- 📡 Start/stop an FTP server directly from the Quick Access Menu
-- 🔗 Shows your local IP + port so you can connect instantly
-- 📁 Shares `/home/deck` with full read/write (anonymous login)
-- ⚡ pyftpdlib vendored at runtime into `py_modules/` — zero setup
-- 🔒 Runs as root via `_root` flag — port 21 works out of the box
+- 📡 Start/stop an FTP server from the Quick Access Menu
+- 🔗 Displays your local IP and port — connect instantly with any FTP client
+- 📁 Full read and write access to `/home/deck`
+- 🔌 Anonymous login — no credentials to configure
+- ⚡ Works entirely offline after install — no internet required on the Deck
+
+---
 
 ## Usage
 
-1. Install via Decky Loader (plugin browser or manual drop into `~/homebrew/plugins/`)
-2. Open the Quick Access Menu (`…` button)
-3. Toggle **Enable FTP Server** ON
-4. Connect from any FTP client on the same Wi-Fi:
-   ```
-   Host:     <IP shown in panel>
-   Port:     21
-   Username: anonymous  (or leave blank)
-   Password: (anything / empty)
-   ```
+1. Press the **`…`** button to open the Quick Access Menu
+2. Open **decky-ftpd** and toggle **Enable FTP Server** ON
+3. Your Deck's address will appear in the panel, e.g. `ftp://192.168.1.x:2121`
+4. Connect from any FTP client on the same Wi-Fi network
 
-Works with FileZilla, WinSCP, Cyberduck, Total Commander, `ftp` CLI, and most file managers.
+### Connecting
+
+| Field    | Value                        |
+|----------|------------------------------|
+| Protocol | FTP (not SFTP or FTP-SSL)    |
+| Host     | IP shown in the QAM panel    |
+| Port     | `2121`                       |
+| Username | `anonymous` (or leave blank) |
+| Password | *(anything or empty)*        |
+
+### Recommended FTP clients
+
+| Platform | Client |
+|----------|--------|
+| macOS    | Cyberduck, Transmit, ForkLift |
+| Windows  | WinSCP, FileZilla |
+| Android  | Solid Explorer, FX File Explorer |
+| iOS      | FE File Explorer, Filza |
+| Linux    | FileZilla, Nautilus (built-in) |
+
+---
+
+## Notes
+
+- The FTP server shares `/home/deck` — this includes your games, saves, emulators, and homebrew
+- The server is only accessible on your **local network** — it is not exposed to the internet
+- The server stops automatically when the plugin is unloaded or the Deck shuts down
+- Toggle it off when not in use if you are on a shared network
+
+---
 
 ## Development
 
+### Prerequisites
+
+- [pnpm](https://pnpm.io)
+- Python 3.11+
+- A Steam Deck with [Decky Loader](https://decky.xyz) installed
+
+> **Note:** SSH is only required if you want to deploy directly from your dev machine during development. End users installing from the Decky store don't need it.
+
+### Setup
+
 ```bash
-# Install deps (uses pnpm)
+# Install frontend deps
 pnpm install
 
-# Build frontend
-pnpm build
-
-# Watch mode during development
-pnpm watch
-
-# Deploy to Deck over SSH (adjust IP)
-zip -r decky-ftpd.zip dist/ main.py plugin.json package.json py_modules/
-rsync -av decky-ftpd.zip deck@<DECK_IP>:~/Downloads
+# Set up Python venv for editor support (optional but recommended)
+python3 -m venv .venv
+source .venv/bin/activate  # or activate.fish for fish shell
+pip install pyftpdlib
 ```
 
-The Python backend auto-installs `pyftpdlib` into `py_modules/` on first launch.
+### Build & Deploy
 
-## Roadmap / follow-up PRs
+Copy your Deck's IP into `.env`:
 
-- [ ] Settings page: custom port, root directory, passive port range
-- [ ] Username/password auth option  
-- [ ] MicroSD shortcut (`/run/media/mmcblk0p1`)
+```
+DECK_IP=192.168.1.x
+```
+
+Then:
+
+```bash
+make deploy   # build frontend, create zip, rsync to Deck
+make zip      # build + create zip only
+make build    # build frontend only
+make clean    # remove build artifacts
+```
+
+On the Deck, install via **Decky → Settings → Developer → Install Plugin from ZIP**.
+
+---
+
+## Roadmap
+
+- [ ] Settings page — custom port, root directory, passive port range
+- [ ] Optional username/password auth
+- [ ] MicroSD card quick-access shortcut
 - [ ] Active connection count in the status line
+
+---
 
 ## License
 

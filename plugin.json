@@ -1,6 +1,6 @@
 {
   "name": "decky-ftpd",
-  "author": "you",
+  "author": "codevski",
   "flags": ["_root"],
   "api_version": 1,
   "publish": {
