@@ -34,6 +34,7 @@ Thumbs.db
 
 # Ignore built ts files
 dist/
+decky-ftpd-dist/
 
 __pycache__/
 
@@ -55,3 +56,4 @@ out/*
 cli/
 cli/*
 cli/decky
+.github/test-events/
