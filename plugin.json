@@ -1,0 +1,11 @@
+{
+  "name": "decky-ftpd",
+  "author": "you",
+  "flags": ["_root"],
+  "api_version": 1,
+  "publish": {
+    "tags": ["ftp", "file-transfer", "network"],
+    "description": "Run an FTP server directly from Game Mode. Transfer files over your local network — no desktop mode needed.",
+    "image": ""
+  }
+}
