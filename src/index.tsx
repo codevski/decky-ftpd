@@ -86,9 +86,7 @@ function Content() {
       setIp(s.ip);
       setPort(s.port);
       setRoot(s.root);
-    } catch (_) {
-      // backend not ready yet, ignore
-    }
+    } catch (_) {}
   }, []);
 
   // Initial fetch + poll every 5 s while panel is open
@@ -186,7 +184,6 @@ function Content() {
 export default definePlugin(() => {
   console.log("decky-ftpd: frontend loaded");
 
-  // Listen for server-push events from the backend (future use)
   const listener = addEventListener<[status: string]>(
     "ftpd_status",
     (status) => {

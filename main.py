@@ -12,9 +12,8 @@ try:
     from pyftpdlib.handlers import FTPHandler
     from pyftpdlib.servers import FTPServer
 except ImportError:
-    pass  # installed at runtime via _ensure_pyftpdlib()
+    pass
 
-# ── pyftpdlib lives in py_modules/ (vendored at runtime on first launch) ──
 PY_MODULES_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), "py_modules")
 
 
@@ -39,9 +38,9 @@ class Plugin:
     _server_thread = None
     _running = False
 
-    # Defaults — future settings page will persist these via decky.logger settings API
+    # TODO: Set in settings page
     _port: int = 2121
-    _root: str = decky.DECKY_USER_HOME  # /home/deck
+    _root: str = decky.DECKY_USER_HOME
 
     # ── lifecycle ──────────────────────────────────────────────────────────
     async def _main(self):

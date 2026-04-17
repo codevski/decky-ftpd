@@ -2,7 +2,6 @@
 
 PLUGIN_NAME = decky-ftpd
 
-# Load .env if it exists
 -include .env
 export
 
