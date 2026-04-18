@@ -17,28 +17,9 @@ import {
 import { useState, useEffect, useCallback } from "react";
 import { FaNetworkWired } from "react-icons/fa";
 import SettingsModal from "./SettingsModal";
-
-interface FtpdStatus {
-  running: boolean;
-  ip: string;
-  port: number;
-  root: string;
-}
-
-const QUICK_PATHS = [
-  { label: "Home", path: "/home/deck" },
-  { label: "SD Card", path: "/run/media" },
-  { label: "Everything", path: "/" },
-];
-
-const getStatus = callable<[], FtpdStatus>("get_status");
-
-const startServer = callable<[], { success: boolean; error?: string }>(
-  "start_server",
-);
-const stopServer = callable<[], { success: boolean; error?: string }>(
-  "stop_server",
-);
+import { FtpdStatus } from "./types";
+import { getStatus, startServer, stopServer } from "./backend";
+import { QUICK_PATHS } from "./defaults";
 
 function StatusDot({ running }: { running: boolean }) {
   return (

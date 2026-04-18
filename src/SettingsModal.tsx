@@ -1,16 +1,8 @@
 import { ButtonItem, ModalRoot, TextField } from "@decky/ui";
 import { callable, toaster } from "@decky/api";
 import { useEffect, useState } from "react";
-
-interface FtpdSettings {
-  port: number;
-  root_dir: string;
-}
-
-const DEFAULTS: FtpdSettings = {
-  port: 2121,
-  root_dir: "/",
-};
+import { FtpdSettings } from "./types";
+import { DEFAULTS } from "./defaults";
 
 const getSettings = callable<[], FtpdSettings>("get_settings");
 const saveSettings = callable<

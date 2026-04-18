@@ -9,27 +9,12 @@ from typing import TYPE_CHECKING
 from settings import SettingsManager  # pyright: ignore[reportMissingImports]
 
 import decky
+from utils import ensure_pyftpdlib, get_local_ip
 
 if TYPE_CHECKING:
     from pyftpdlib.servers import FTPServer
 
 PY_MODULES_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), "py_modules")
-
-
-def _ensure_pyftpdlib() -> None:
-    if PY_MODULES_DIR not in sys.path:
-        sys.path.insert(0, PY_MODULES_DIR)
-
-
-def _get_local_ip() -> str:
-    try:
-        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        s.connect(("8.8.8.8", 80))
-        ip = s.getsockname()[0]
-        s.close()
-        return ip
-    except Exception:
-        return "Unknown"
 
 
 class Plugin:
@@ -48,7 +33,7 @@ class Plugin:
 
     async def _main(self):
         self._loop = asyncio.get_running_loop()
-        _ensure_pyftpdlib()
+        ensure_pyftpdlib()
 
         settings = SettingsManager(
             name="settings",
@@ -79,7 +64,7 @@ class Plugin:
                 "ftpd_status",
                 {
                     "running": self._running,
-                    "ip": _get_local_ip() if self._running else "",
+                    "ip": get_local_ip() if self._running else "",
                     "port": self._get("port"),
                     "root": self._get("root_dir"),
                 },
@@ -92,7 +77,7 @@ class Plugin:
             return {"success": True, "already": True}
 
         try:
-            _ensure_pyftpdlib()
+            ensure_pyftpdlib()
             from pyftpdlib.authorizers import DummyAuthorizer
             from pyftpdlib.handlers import FTPHandler
             from pyftpdlib.servers import FTPServer
@@ -151,8 +136,6 @@ class Plugin:
             await self._emit_status()
             return {"success": True}
 
-            return {"success": True}
-
         except Exception as exc:
             self._running = False
             await self._emit_status()
@@ -178,7 +161,7 @@ class Plugin:
     async def get_status(self) -> dict:
         return {
             "running": self._running,
-            "ip": _get_local_ip() if self._running else "",
+            "ip": get_local_ip() if self._running else "",
             "port": self._get("port"),
             "root": self._get("root_dir"),
         }
