@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented here.
 
+## [0.1.3] - 2026-04-18
+
+### Fixed
+- Plugin failed to load with `ModuleNotFoundError: No module named 'utils'`; helper module moved to `py_modules/`.
+- QAM panel opened scrolled to the bottom instead of the top when content overflowed.
+
+### Changed
+- Added Quick Paths section for one-tap root directory switching.
+- Panel layout no longer jumps height when the server is toggled on or off.
+
 ## [0.1.2] - 2026-04-18
 
 ### Added
