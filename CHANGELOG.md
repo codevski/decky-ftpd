@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented here.
 
+## [0.1.2] - 2026-04-18
+
+### Added
+- Quick Paths section in QAM with one-tap switching between Home, SD Card, and full filesystem
+
+### Fixed
+- Partial settings updates no longer reset unspecified fields to defaults
+
 ## [0.1.1] - 2026-04-18
 
 ### Added
