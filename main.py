@@ -187,14 +187,6 @@ class Plugin:
 
             port = int(new_settings.get("port", self.DEFAULTS["port"]))
             root = str(new_settings.get("root_dir", self.DEFAULTS["root_dir"]))
-            p_start = int(
-                new_settings.get(
-                    "passive_port_start", self.DEFAULTS["passive_port_start"]
-                )
-            )
-            p_end = int(
-                new_settings.get("passive_port_end", self.DEFAULTS["passive_port_end"])
-            )
 
             if not (1024 <= port <= 65535):
                 return {"success": False, "error": "Port must be 1024–65535."}
@@ -203,26 +195,9 @@ class Plugin:
                     "success": False,
                     "error": "Root must be an absolute path.",
                 }
-            if not (1024 <= p_start <= 65535 and 1024 <= p_end <= 65535):
-                return {
-                    "success": False,
-                    "error": "Passive ports must be 1024–65535.",
-                }
-            if p_end <= p_start:
-                return {
-                    "success": False,
-                    "error": "Passive end must be greater than start.",
-                }
-            if p_start <= port <= p_end:
-                return {
-                    "success": False,
-                    "error": "Control port must not sit inside the passive range.",
-                }
 
             self._settings.setSetting("port", port)
             self._settings.setSetting("root_dir", root)
-            self._settings.setSetting("passive_port_start", p_start)
-            self._settings.setSetting("passive_port_end", p_end)
             self._settings.commit()
 
             restarted = False
