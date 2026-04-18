@@ -1,15 +1,16 @@
 import asyncio
 import os
-import socket
-import sys
 import threading
 import warnings
 from typing import TYPE_CHECKING
 
 from settings import SettingsManager  # pyright: ignore[reportMissingImports]
+from utils import (  # pyright: ignore[reportMissingImports]
+    ensure_pyftpdlib,
+    get_local_ip,
+)
 
 import decky
-from utils import ensure_pyftpdlib, get_local_ip
 
 if TYPE_CHECKING:
     from pyftpdlib.servers import FTPServer

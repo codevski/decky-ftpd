@@ -14,7 +14,7 @@ import {
   definePlugin,
   toaster,
 } from "@decky/api";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { FaNetworkWired } from "react-icons/fa";
 import SettingsModal from "./SettingsModal";
 import { FtpdStatus } from "./types";
@@ -64,6 +64,7 @@ function Content() {
   const [root, setRoot] = useState<string>("/");
   const [toggling, setToggling] = useState<boolean>(false);
   const [savingPath, setSavingPath] = useState<string | null>(null);
+  const topRef = useRef<HTMLDivElement>(null);
 
   const applyStatus = useCallback((s: FtpdStatus) => {
     setRunning(s.running);
@@ -91,6 +92,23 @@ function Content() {
       setSavingPath(null);
     }
   };
+
+  useEffect(() => {
+    const resetScroll = () => {
+      let el: HTMLElement | null = topRef.current;
+      while (el) {
+        const style = getComputedStyle(el);
+        const scrolls = /(auto|scroll)/.test(style.overflow + style.overflowY);
+        if (scrolls && el.scrollHeight > el.clientHeight) {
+          el.scrollTop = 0;
+          return;
+        }
+        el = el.parentElement;
+      }
+    };
+
+    requestAnimationFrame(() => requestAnimationFrame(resetScroll));
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -133,7 +151,7 @@ function Content() {
   };
 
   return (
-    <>
+    <div ref={topRef}>
       <PanelSection title="FTP Server">
         <PanelSectionRow>
           <ToggleField
@@ -149,30 +167,32 @@ function Content() {
             onChange={handleToggle}
           />
         </PanelSectionRow>
-
-        {running && ip && (
-          <PanelSectionRow>
-            <Field
-              label="Address"
-              description="Connect with any FTP client on your local network"
-            >
+        <PanelSectionRow>
+          <Field
+            label="Address"
+            description={
+              running
+                ? "Connect with any FTP client on your local network"
+                : "Server stopped"
+            }
+          >
+            {running && ip ? (
               <AddressBadge ip={ip} port={port} />
-            </Field>
-          </PanelSectionRow>
-        )}
-
-        {running && (
-          <PanelSectionRow>
-            <Field
-              label="Sharing"
-              description={
-                <span style={{ fontFamily: "monospace", fontSize: 11 }}>
-                  {root}
-                </span>
-              }
-            />
-          </PanelSectionRow>
-        )}
+            ) : (
+              <span style={{ opacity: 0.4 }}>—</span>
+            )}
+          </Field>
+        </PanelSectionRow>
+        <PanelSectionRow>
+          <Field
+            label="Sharing"
+            description={
+              <span style={{ fontFamily: "monospace", fontSize: 11 }}>
+                {root}
+              </span>
+            }
+          />
+        </PanelSectionRow>
       </PanelSection>
 
       <PanelSection title="Quick Paths">
@@ -209,7 +229,7 @@ function Content() {
           </ButtonItem>
         </PanelSectionRow>
       </PanelSection>
-    </>
+    </div>
   );
 }
 
