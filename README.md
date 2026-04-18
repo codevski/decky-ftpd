@@ -2,7 +2,7 @@
 
 ![logo](assets/logo.png)
 
-> Transfer files to and from your Steam Deck over Wi-Fi — directly from Game Mode, no desktop required.  
+> Transfer files to and from your Steam Deck over Wi-Fi directly from Game Mode, no desktop required.  
 > Inspired by ftpd on PSP / PS Vita.
 
 ---
@@ -10,8 +10,8 @@
 ## Features
 
 - 📡 Start/stop an FTP server from the Quick Access Menu
-- 🔗 Displays your local IP and port — connect instantly with any FTP client
-- 📁 Full read and write access to `/home/deck`
+- 🔗 Displays your local IP and port connect instantly with any FTP client
+- 📁 Full read and write access to the deck
 - 🔌 Anonymous login — no credentials to configure
 - ⚡ Works entirely offline after install — no internet required on the Deck
 
@@ -100,7 +100,7 @@ On the Deck, install via **Decky → Settings → Developer → Install Plugin f
 
 ## Roadmap
 
-- [ ] Settings page — custom port, root directory, passive port range
+- [x] Settings page — custom port, root directory, passive port range
 - [ ] Optional username/password auth
 - [ ] MicroSD card quick-access shortcut
 - [ ] Active connection count in the status line
