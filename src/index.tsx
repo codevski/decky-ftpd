@@ -5,6 +5,7 @@ import {
   ToggleField,
   Field,
   staticClasses,
+  showModal,
 } from "@decky/ui";
 import {
   addEventListener,
@@ -15,25 +16,24 @@ import {
 } from "@decky/api";
 import { useState, useEffect, useCallback } from "react";
 import { FaNetworkWired } from "react-icons/fa";
+import SettingsModal from "./SettingsModal";
 
-// ── backend callables ──────────────────────────────────────────────────────
+interface FtpdStatus {
+  running: boolean;
+  ip: string;
+  port: number;
+  root: string;
+}
+
+const getStatus = callable<[], FtpdStatus>("get_status");
+
 const startServer = callable<[], { success: boolean; error?: string }>(
   "start_server",
 );
 const stopServer = callable<[], { success: boolean; error?: string }>(
   "stop_server",
 );
-const getStatus = callable<
-  [],
-  {
-    running: boolean;
-    ip: string;
-    port: number;
-    root: string;
-  }
->("get_status");
 
-// ── status indicator dot ───────────────────────────────────────────────────
 function StatusDot({ running }: { running: boolean }) {
   return (
     <span
@@ -51,7 +51,6 @@ function StatusDot({ running }: { running: boolean }) {
   );
 }
 
-// ── monospace address badge ────────────────────────────────────────────────
 function AddressBadge({ ip, port }: { ip: string; port: number }) {
   return (
     <span
@@ -71,37 +70,43 @@ function AddressBadge({ ip, port }: { ip: string; port: number }) {
   );
 }
 
-// ── main panel content ─────────────────────────────────────────────────────
 function Content() {
   const [running, setRunning] = useState<boolean>(false);
   const [ip, setIp] = useState<string>("");
   const [port, setPort] = useState<number>(21);
-  const [root, setRoot] = useState<string>("/home/deck");
+  const [root, setRoot] = useState<string>("/");
   const [toggling, setToggling] = useState<boolean>(false);
-
-  const refresh = useCallback(async () => {
-    try {
-      const s = await getStatus();
-      setRunning(s.running);
-      setIp(s.ip);
-      setPort(s.port);
-      setRoot(s.root);
-    } catch (_) {}
+  const applyStatus = useCallback((s: FtpdStatus) => {
+    setRunning(s.running);
+    setIp(s.ip);
+    setPort(s.port);
+    setRoot(s.root);
   }, []);
 
-  // Initial fetch + poll every 5 s while panel is open
   useEffect(() => {
-    void refresh();
-    const id = setInterval(refresh, 5000);
-    return () => clearInterval(id);
-  }, [refresh]);
+    let cancelled = false;
+
+    getStatus()
+      .then((s) => {
+        if (!cancelled) applyStatus(s);
+      })
+      .catch(() => {});
+
+    const listener = addEventListener<[FtpdStatus]>("ftpd_status", (s) => {
+      applyStatus(s);
+    });
+
+    return () => {
+      cancelled = true;
+      removeEventListener("ftpd_status", listener);
+    };
+  }, []);
 
   const handleToggle = async (next: boolean) => {
     setToggling(true);
     try {
       const res = next ? await startServer() : await stopServer();
       if (res.success) {
-        await refresh();
         toaster.toast({
           title: "decky-ftpd",
           body: next ? "FTP server started" : "FTP server stopped",
@@ -166,13 +171,9 @@ function Content() {
           <ButtonItem
             layout="below"
             description="Port, root directory, passive range…"
-            disabled
-            onClick={() => {
-              // TODO: Navigation.Navigate("/decky-ftpd/settings");
-              // Navigation.CloseSideMenus();
-            }}
+            onClick={() => showModal(<SettingsModal />)}
           >
-            Settings (coming soon)
+            Settings
           </ButtonItem>
         </PanelSectionRow>
       </PanelSection>
@@ -180,17 +181,8 @@ function Content() {
   );
 }
 
-// ── plugin entry point ─────────────────────────────────────────────────────
 export default definePlugin(() => {
   console.log("decky-ftpd: frontend loaded");
-
-  const listener = addEventListener<[status: string]>(
-    "ftpd_status",
-    (status) => {
-      console.log("decky-ftpd got ftpd_status:", status);
-    },
-  );
-
   return {
     name: "decky-ftpd",
     titleView: <div className={staticClasses.Title}>decky-ftpd</div>,
@@ -198,7 +190,6 @@ export default definePlugin(() => {
     icon: <FaNetworkWired />,
     onDismount() {
       console.log("decky-ftpd: frontend unloading");
-      removeEventListener("ftpd_status", listener);
     },
   };
 });
