@@ -1,37 +1,29 @@
 name: Release
-
 on:
   push:
     tags:
       - "v*"
-
 jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
           version: latest
-
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: 24
           cache: pnpm
-
       - name: Install dependencies
         run: pnpm install
-
       - name: Build frontend
         run: pnpm build
-
       - name: Create plugin zip
         run: |
           mkdir -p decky-ftpd-dist/decky-ftpd
@@ -39,9 +31,24 @@ jobs:
           cp -r dist decky-ftpd-dist/decky-ftpd/dist
           cp -r py_modules decky-ftpd-dist/decky-ftpd/py_modules
           cd decky-ftpd-dist && zip -r ../decky-ftpd.zip decky-ftpd/
-
+      - name: Extract release notes for this version
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          awk -v ver="$VERSION" '
+            /^## \[/ {
+              if (found) exit
+              if ($0 ~ "^## \\[" ver "\\]") { found=1; next }
+            }
+            found { print }
+          ' CHANGELOG.md > RELEASE_NOTES.md
+          echo "--- Extracted notes for v$VERSION ---"
+          cat RELEASE_NOTES.md
+          if [ ! -s RELEASE_NOTES.md ]; then
+            echo "::error::No changelog section found for version $VERSION"
+            exit 1
+          fi
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           files: decky-ftpd.zip
-          body_path: CHANGELOG.md
+          body_path: RELEASE_NOTES.md
