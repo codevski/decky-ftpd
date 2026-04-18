@@ -25,6 +25,12 @@ interface FtpdStatus {
   root: string;
 }
 
+const QUICK_PATHS = [
+  { label: "Home", path: "/home/deck" },
+  { label: "SD Card", path: "/run/media" },
+  { label: "Everything", path: "/" },
+];
+
 const getStatus = callable<[], FtpdStatus>("get_status");
 
 const startServer = callable<[], { success: boolean; error?: string }>(
@@ -76,12 +82,34 @@ function Content() {
   const [port, setPort] = useState<number>(21);
   const [root, setRoot] = useState<string>("/");
   const [toggling, setToggling] = useState<boolean>(false);
+  const [savingPath, setSavingPath] = useState<string | null>(null);
+
   const applyStatus = useCallback((s: FtpdStatus) => {
     setRunning(s.running);
     setIp(s.ip);
     setPort(s.port);
     setRoot(s.root);
   }, []);
+  const saveSettings = callable<
+    [Record<string, string | number>],
+    { success: boolean; error?: string; restarted?: boolean }
+  >("save_settings");
+
+  const handleQuickPath = async (path: string) => {
+    if (path === root || savingPath !== null) return;
+    setSavingPath(path);
+    try {
+      const res = await saveSettings({ root_dir: path });
+      if (!res.success) {
+        toaster.toast({
+          title: "decky-ftpd — error",
+          body: res.error ?? "Failed to change path",
+        });
+      }
+    } finally {
+      setSavingPath(null);
+    }
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -166,11 +194,34 @@ function Content() {
         )}
       </PanelSection>
 
+      <PanelSection title="Quick Paths">
+        {QUICK_PATHS.map((qp) => {
+          const active = root === qp.path;
+          return (
+            <PanelSectionRow key={qp.path}>
+              <ButtonItem
+                layout="below"
+                disabled={savingPath !== null}
+                description={
+                  <span style={{ fontFamily: "monospace", fontSize: 11 }}>
+                    {qp.path}
+                  </span>
+                }
+                onClick={() => handleQuickPath(qp.path)}
+              >
+                {active ? "✓ " : ""}
+                {qp.label}
+              </ButtonItem>
+            </PanelSectionRow>
+          );
+        })}
+      </PanelSection>
+
       <PanelSection title="Options">
         <PanelSectionRow>
           <ButtonItem
             layout="below"
-            description="Port, root directory, passive range…"
+            description="Port, root directory, authentication"
             onClick={() => showModal(<SettingsModal />)}
           >
             Settings
