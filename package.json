@@ -1,6 +1,6 @@
 {
   "name": "decky-ftpd",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "FTP server for Steam Deck Game Mode, no desktop required",
   "type": "module",
   "scripts": {
