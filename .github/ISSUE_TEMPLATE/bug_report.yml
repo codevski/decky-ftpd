@@ -1,0 +1,105 @@
+name: Bug Report
+
+description: Use this template to report a bug.
+
+title: "Bug: {bug summary}"
+
+labels: [bug]
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please ensure to redact sensitive information such as IP addresses, usernames, and passwords.
+  - type: input
+    id: bug_summary
+    attributes:
+      label: "Bug Summary"
+      description: "A short summary of the bug"
+      placeholder: "e.g. Plugin crashes when opening settings"
+  - type: textarea
+    id: expected_behavior
+    attributes:
+      label: "Expected Behavior"
+      description: "What you expected to happen"
+      placeholder: "e.g. The plugin should open the settings"
+  - type: textarea
+    id: actual_behavior
+    attributes:
+      label: "Actual Behavior"
+      description: "What actually happened"
+      placeholder: "e.g. The plugin crashes"
+  - type: textarea
+    id: reproduction_steps
+    attributes:
+      label: "Reproduction Steps"
+      description: "Steps to reproduce the bug"
+      placeholder: "1. Open the plugin 2. Click settings"
+  - type: input
+    id: frequency
+    attributes:
+      label: "Frequency"
+      description: "How often does this bug occur?"
+      placeholder: "e.g. Every time, sometimes"
+  - type: input
+    id: decky_loader_version
+    attributes:
+      label: "Decky Loader Version"
+      placeholder: "e.g. 0.5.0"
+  - type: input
+    id: steam_deck_os_version
+    attributes:
+      label: "Steam Deck OS Version"
+      placeholder: "e.g. 3.1.0"
+  - type: input
+    id: plugin_version_commit
+    attributes:
+      label: "Plugin Version/Commit"
+      placeholder: "e.g. commit hash or version number"
+  - type: input
+    id: installation_method
+    attributes:
+      label: "Installation Method"
+      placeholder: "e.g. Steam, manually, etc."
+  - type: input
+    id: ftp_client_used
+    attributes:
+      label: "FTP Client Used"
+      placeholder: "e.g. FileZilla, WinSCP"
+  - type: input
+    id: network_setup
+    attributes:
+      label: "Network Setup"
+      description: "Wired/Wifi, Router/AP model"
+      placeholder: "e.g. Wired, Netgear RAX200"
+  - type: textarea
+    id: logs
+    attributes:
+      label: "Logs"
+      description: "Attach or paste logs related to the bug"
+      placeholder: "e.g. Error logs"
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: "Screenshots"
+      description: "Attach or paste screenshots of the issue"
+  - type: textarea
+    id: additional_context
+    attributes:
+      label: "Additional Context"
+      description: "Any other relevant information"
+  - type: checkbox
+    id: searched_existing_issues
+    attributes:
+      label: "I have searched existing issues"
+      required: true
+  - type: checkbox
+    id: on_latest_release
+    attributes:
+      label: "I am on the latest release"
+      required: true
+  - type: checkbox
+    id: included_logs
+    attributes:
+      label: "I have included logs"
+      required: true
