@@ -1,25 +1,24 @@
 import {
-  ButtonItem,
   PanelSection,
   PanelSectionRow,
   ToggleField,
   Field,
+  Focusable,
+  DialogButton,
   staticClasses,
   showModal,
 } from "@decky/ui";
 import {
   addEventListener,
   removeEventListener,
-  callable,
   definePlugin,
   toaster,
 } from "@decky/api";
 import { useState, useEffect, useCallback, useRef } from "react";
-import { FaNetworkWired } from "react-icons/fa";
+import { FaNetworkWired, FaCog } from "react-icons/fa";
 import SettingsModal from "./SettingsModal";
 import { FtpdStatus } from "./types";
 import { getStatus, startServer, stopServer } from "./backend";
-import { QUICK_PATHS } from "./defaults";
 
 function StatusDot({ running }: { running: boolean }) {
   return (
@@ -57,13 +56,68 @@ function AddressBadge({ ip, port }: { ip: string; port: number }) {
   );
 }
 
+function AnonymousBanner() {
+  return (
+    <div
+      style={{
+        background: "rgba(202, 138, 4, 0.15)",
+        border: "1px solid rgba(250, 204, 21, 0.45)",
+        borderRadius: 4,
+        padding: "8px 10px",
+        margin: "4px 0 10px",
+        fontSize: 12,
+        lineHeight: 1.35,
+        color: "#fde68a",
+      }}
+    >
+      <div style={{ fontWeight: 600, marginBottom: 2 }}>
+        ⚠ Anonymous access enabled
+      </div>
+      <div style={{ opacity: 0.9 }}>
+        Anyone on your network can read and write to your Deck without a
+        password. Turn this off in Settings for a private connection.
+      </div>
+    </div>
+  );
+}
+
+function TitleView() {
+  return (
+    <Focusable
+      className={staticClasses.Title}
+      style={{
+        display: "flex",
+        padding: 0,
+        width: "100%",
+        boxShadow: "none",
+        alignItems: "center",
+        justifyContent: "space-between",
+      }}
+    >
+      <div>decky-ftpd</div>
+      <DialogButton
+        style={{
+          height: 28,
+          width: 40,
+          minWidth: 0,
+          padding: "10px 12px",
+        }}
+        onClick={() => showModal(<SettingsModal />)}
+      >
+        <FaCog style={{ marginTop: -4, display: "block" }} />
+      </DialogButton>
+    </Focusable>
+  );
+}
+
 function Content() {
   const [running, setRunning] = useState<boolean>(false);
   const [ip, setIp] = useState<string>("");
   const [port, setPort] = useState<number>(21);
   const [root, setRoot] = useState<string>("/");
+  const [username, setUsername] = useState<string>("deck");
+  const [anonymous, setAnonymous] = useState<boolean>(false);
   const [toggling, setToggling] = useState<boolean>(false);
-  const [savingPath, setSavingPath] = useState<string | null>(null);
   const topRef = useRef<HTMLDivElement>(null);
 
   const applyStatus = useCallback((s: FtpdStatus) => {
@@ -71,27 +125,9 @@ function Content() {
     setIp(s.ip);
     setPort(s.port);
     setRoot(s.root);
+    setUsername(s.username ?? "deck");
+    setAnonymous(Boolean(s.anonymous));
   }, []);
-  const saveSettings = callable<
-    [Record<string, string | number>],
-    { success: boolean; error?: string; restarted?: boolean }
-  >("save_settings");
-
-  const handleQuickPath = async (path: string) => {
-    if (path === root || savingPath !== null) return;
-    setSavingPath(path);
-    try {
-      const res = await saveSettings({ root_dir: path });
-      if (!res.success) {
-        toaster.toast({
-          title: "decky-ftpd — error",
-          body: res.error ?? "Failed to change path",
-        });
-      }
-    } finally {
-      setSavingPath(null);
-    }
-  };
 
   useEffect(() => {
     const resetScroll = () => {
@@ -150,8 +186,11 @@ function Content() {
     }
   };
 
+  const loginLabel = anonymous ? "anonymous" : username || "deck";
+
   return (
     <div ref={topRef}>
+      {anonymous && <AnonymousBanner />}
       <PanelSection title="FTP Server">
         <PanelSectionRow>
           <ToggleField
@@ -185,48 +224,17 @@ function Content() {
         </PanelSectionRow>
         <PanelSectionRow>
           <Field
-            label="Sharing"
+            label="Login"
             description={
               <span style={{ fontFamily: "monospace", fontSize: 11 }}>
-                {root}
+                <span style={{ color: anonymous ? "#fde68a" : "inherit" }}>
+                  {loginLabel}
+                </span>
+                <span style={{ opacity: 0.45, margin: "0 6px" }}>·</span>
+                <span style={{ opacity: 0.75 }}>{root}</span>
               </span>
             }
           />
-        </PanelSectionRow>
-      </PanelSection>
-
-      <PanelSection title="Quick Paths">
-        {QUICK_PATHS.map((qp) => {
-          const active = root === qp.path;
-          return (
-            <PanelSectionRow key={qp.path}>
-              <ButtonItem
-                layout="below"
-                disabled={savingPath !== null}
-                description={
-                  <span style={{ fontFamily: "monospace", fontSize: 11 }}>
-                    {qp.path}
-                  </span>
-                }
-                onClick={() => handleQuickPath(qp.path)}
-              >
-                {active ? "✓ " : ""}
-                {qp.label}
-              </ButtonItem>
-            </PanelSectionRow>
-          );
-        })}
-      </PanelSection>
-
-      <PanelSection title="Options">
-        <PanelSectionRow>
-          <ButtonItem
-            layout="below"
-            description="Port, root directory, authentication"
-            onClick={() => showModal(<SettingsModal />)}
-          >
-            Settings
-          </ButtonItem>
         </PanelSectionRow>
       </PanelSection>
     </div>
@@ -237,7 +245,7 @@ export default definePlugin(() => {
   console.log("decky-ftpd: frontend loaded");
   return {
     name: "decky-ftpd",
-    titleView: <div className={staticClasses.Title}>decky-ftpd</div>,
+    titleView: <TitleView />,
     content: <Content />,
     icon: <FaNetworkWired />,
     onDismount() {

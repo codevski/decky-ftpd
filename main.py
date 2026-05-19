@@ -17,6 +17,8 @@ if TYPE_CHECKING:
 
 PY_MODULES_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), "py_modules")
 
+FTP_ROOT = "/"
+
 
 class Plugin:
     _server: "FTPServer | None" = None
@@ -27,9 +29,11 @@ class Plugin:
 
     DEFAULTS = {
         "port": 2121,
-        "root_dir": "/",
         "passive_port_start": 50000,
         "passive_port_end": 50100,
+        "username": "deck",
+        "password": "deck",
+        "anonymous": False,
     }
 
     async def _main(self):
@@ -44,9 +48,10 @@ class Plugin:
         self._settings = settings
 
         decky.logger.info(
-            "decky-ftpd loaded (port=%d, root=%s)",
+            "decky-ftpd loaded (port=%d, root=%s, anonymous=%s)",
             self._get("port"),
-            self._get("root_dir"),
+            FTP_ROOT,
+            self._get("anonymous"),
         )
 
     async def _unload(self):
@@ -67,7 +72,9 @@ class Plugin:
                     "running": self._running,
                     "ip": get_local_ip() if self._running else "",
                     "port": self._get("port"),
-                    "root": self._get("root_dir"),
+                    "root": FTP_ROOT,
+                    "username": self._get("username"),
+                    "anonymous": bool(self._get("anonymous")),
                 },
             )
         except Exception as e:
@@ -83,10 +90,25 @@ class Plugin:
             from pyftpdlib.handlers import FTPHandler
             from pyftpdlib.servers import FTPServer
 
+            anonymous = bool(self._get("anonymous"))
+            username = str(self._get("username") or "").strip()
+            password = str(self._get("password") or "")
+
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore", RuntimeWarning)
                 authorizer = DummyAuthorizer()
-                authorizer.add_anonymous(self._get("root_dir"), perm="elradfmwMT")
+                if anonymous:
+                    authorizer.add_anonymous(FTP_ROOT, perm="elradfmwMT")
+                else:
+                    if not username or not password:
+                        return {
+                            "success": False,
+                            "error": (
+                                "Username and password must be set, or enable "
+                                "anonymous mode in settings."
+                            ),
+                        }
+                    authorizer.add_user(username, password, FTP_ROOT, perm="elradfmwMT")
 
             p_start = self._get("passive_port_start")
             p_end = self._get("passive_port_end")
@@ -105,7 +127,9 @@ class Plugin:
 
             def _serve():
                 decky.logger.info(
-                    "decky-ftpd: server started on port %d", self._get("port")
+                    "decky-ftpd: server started on port %d (anonymous=%s)",
+                    self._get("port"),
+                    anonymous,
                 )
                 try:
                     server.serve_forever()
@@ -164,7 +188,9 @@ class Plugin:
             "running": self._running,
             "ip": get_local_ip() if self._running else "",
             "port": self._get("port"),
-            "root": self._get("root_dir"),
+            "root": FTP_ROOT,
+            "username": self._get("username"),
+            "anonymous": bool(self._get("anonymous")),
         }
 
     def _get(self, key: str):
@@ -179,18 +205,20 @@ class Plugin:
             assert self._settings is not None
 
             port = int(new_settings.get("port", self._get("port")))
-            root = str(new_settings.get("root_dir", self._get("root_dir")))
             p_start = int(
                 new_settings.get("passive_port_start", self._get("passive_port_start"))
             )
             p_end = int(
                 new_settings.get("passive_port_end", self._get("passive_port_end"))
             )
+            anonymous = bool(new_settings.get("anonymous", self._get("anonymous")))
+            username = str(
+                new_settings.get("username", self._get("username") or "")
+            ).strip()
+            password = str(new_settings.get("password", self._get("password") or ""))
 
             if not (1024 <= port <= 65535):
                 return {"success": False, "error": "Port must be 1024–65535."}
-            if not root.startswith("/"):
-                return {"success": False, "error": "Root must be an absolute path."}
             if not (1024 <= p_start <= 65535 and 1024 <= p_end <= 65535):
                 return {"success": False, "error": "Passive ports must be 1024–65535."}
             if p_end <= p_start:
@@ -203,11 +231,24 @@ class Plugin:
                     "success": False,
                     "error": "Control port must not sit inside the passive range.",
                 }
+            if not anonymous:
+                if not username:
+                    return {
+                        "success": False,
+                        "error": "Username cannot be empty when anonymous mode is off.",
+                    }
+                if not password:
+                    return {
+                        "success": False,
+                        "error": "Password cannot be empty when anonymous mode is off.",
+                    }
 
             self._settings.setSetting("port", port)
-            self._settings.setSetting("root_dir", root)
             self._settings.setSetting("passive_port_start", p_start)
             self._settings.setSetting("passive_port_end", p_end)
+            self._settings.setSetting("anonymous", anonymous)
+            self._settings.setSetting("username", username)
+            self._settings.setSetting("password", password)
             self._settings.commit()
 
             restarted = False

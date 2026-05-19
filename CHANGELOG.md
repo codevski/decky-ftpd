@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented here.
 
+## [0.1.4] - 2026-05-20
+
+### Added
+- Username/password authentication, on by default with credentials `deck` / `deck` (editable in Settings).
+- Anonymous (no-password) mode as an opt-in toggle, gated by a confirmation prompt.
+- Login row on the main panel showing the active username (or "anonymous").
+
+### Changed
+- Root directory is now locked to `/`. Navigate to subdirectories from your FTP client. This sidesteps a "no access" bug seen when the configured root resolved through a symlink (notably `/run/media` for the SD card).
+- Settings modal: removed the Root directory field; added Username, Password, and Anonymous access controls.
+- Quick Paths panel removed from the main screen.
+- Settings moved from a bottom button to a gear icon in the panel title bar. The Options section is gone; the QAM panel is now action-only.
+- Login and Sharing rows merged into a single line (`<user> · /`) to tighten the FTP Server section.
+
+### Migration
+- Existing installations with a custom `root_dir` setting will start serving `/` after upgrade. Authentication is on by default, so existing users automatically gain credential protection.
+
 ## [0.1.3] - 2026-04-18
 
 ### Fixed
