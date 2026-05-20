@@ -1,4 +1,11 @@
-import { ButtonItem, ModalRoot, TextField } from "@decky/ui";
+import {
+  ButtonItem,
+  ConfirmModal,
+  ModalRoot,
+  TextField,
+  ToggleField,
+  showModal,
+} from "@decky/ui";
 import { callable, toaster } from "@decky/api";
 import { useEffect, useState } from "react";
 import { FtpdSettings } from "./types";
@@ -6,7 +13,7 @@ import { DEFAULTS } from "./defaults";
 
 const getSettings = callable<[], FtpdSettings>("get_settings");
 const saveSettings = callable<
-  [Record<string, string | number>],
+  [Record<string, string | number | boolean>],
   { success: boolean; error?: string; restarted?: boolean }
 >("save_settings");
 
@@ -16,28 +23,64 @@ interface Props {
 
 export default function SettingsModal({ closeModal }: Props) {
   const [portStr, setPortStr] = useState(String(DEFAULTS.port));
-  const [rootDir, setRootDir] = useState(DEFAULTS.root_dir);
+  const [username, setUsername] = useState(DEFAULTS.username);
+  const [password, setPassword] = useState(DEFAULTS.password);
+  const [anonymous, setAnonymous] = useState(DEFAULTS.anonymous);
+  const [anonToggleKey, setAnonToggleKey] = useState(0);
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     getSettings()
-      .then((s) => {
-        const cur = s ?? DEFAULTS;
+      .then((setting) => {
+        const cur = setting ?? DEFAULTS;
         setPortStr(String(cur.port));
-        setRootDir(cur.root_dir);
+        setUsername(cur.username ?? DEFAULTS.username);
+        setPassword(cur.password ?? DEFAULTS.password);
+        setAnonymous(Boolean(cur.anonymous));
       })
       .catch((e) => console.error("[decky-ftpd] get_settings failed", e))
       .finally(() => setLoading(false));
   }, []);
+
+  const handleAnonymousToggle = (next: boolean) => {
+    if (!next) {
+      setAnonymous(false);
+      return;
+    }
+    const resetVisualToggle = () => {
+      setAnonymous(false);
+      setAnonToggleKey((k) => k + 1);
+    };
+    showModal(
+      <ConfirmModal
+        strTitle="Disable authentication?"
+        strDescription={
+          "Anonymous mode means anyone on the same Wi-Fi network can read, " +
+          "write, and delete files on your Steam Deck without a password. " +
+          "Only enable this on a trusted home network you control.\n\n" +
+          "Continue?"
+        }
+        strOKButtonText="Enable anonymous"
+        strCancelButtonText="Cancel"
+        bDestructiveWarning
+        bAlertDialog
+        onOK={() => setAnonymous(true)}
+        onCancel={resetVisualToggle}
+        onEscKeypress={resetVisualToggle}
+      />,
+    );
+  };
 
   const onSave = async () => {
     setSaving(true);
     try {
       const res = await saveSettings({
         port: portStr,
-        root_dir: rootDir.trim(),
+        username: username.trim(),
+        password,
+        anonymous,
       });
       if (res.success) {
         toaster.toast({
@@ -77,12 +120,40 @@ export default function SettingsModal({ closeModal }: Props) {
             value={portStr}
             onChange={(e) => setPortStr(e.target.value)}
           />
+
+          <div style={{ marginTop: 16, marginBottom: 4, fontWeight: 600 }}>
+            Authentication
+          </div>
+
           <TextField
-            label="Root directory"
-            description="Absolute path exposed over FTP. Default / (full filesystem)."
-            value={rootDir}
-            onChange={(e) => setRootDir(e.target.value)}
+            label="Username"
+            description="FTP login username. Default 'deck'."
+            value={username}
+            disabled={anonymous}
+            onChange={(e) => setUsername(e.target.value)}
           />
+          <TextField
+            label="Password"
+            description="FTP login password. Default 'deck' — change this if you share a network."
+            value={password}
+            disabled={anonymous}
+            bIsPassword
+            onChange={(e) => setPassword(e.target.value)}
+          />
+          <ToggleField
+            key={`anon-toggle-${anonToggleKey}`}
+            label="Anonymous access (no password)"
+            description={
+              <span style={{ color: anonymous ? "#fca5a5" : "#94a3b8" }}>
+                {anonymous
+                  ? "⚠ Anyone on your network can connect with no password and full read/write access. Only use on a trusted home network."
+                  : "Off: a username and password are required to connect. Recommended."}
+              </span>
+            }
+            checked={anonymous}
+            onChange={handleAnonymousToggle}
+          />
+
           <div style={{ marginTop: 16 }}>
             <ButtonItem layout="below" disabled={saving} onClick={onSave}>
               {saving ? "Saving…" : "Save & Restart Server"}

@@ -39,7 +39,7 @@
 * 🔗 **Instant connect** — your Deck's local IP and port are displayed right in the panel
 * 📁 **Full read/write access** to `/`
   - Games, saves, emulators, homebrew all transferable.
-* 🔌 **Zero config** — anonymous login, no credentials to set up
+* 🔒 **Authentication on by default** — default credentials `deck` / `deck`, fully editable in Settings. Anonymous mode is opt-in.
 * ⚡ **Fully offline** — no internet required on the Deck after install
 * 🛡️ **Local network only** — never exposed to the public internet
 
@@ -52,13 +52,15 @@
 
 ### Connecting
 
-| Field    | Value                        |
-|----------|------------------------------|
-| Protocol | FTP (not SFTP or FTP-SSL)    |
-| Host     | IP shown in the QAM panel    |
-| Port     | `2121`                       |
-| Username | `anonymous` (or leave blank) |
-| Password | *(anything or empty)*        |
+| Field    | Value                                     |
+|----------|-------------------------------------------|
+| Protocol | FTP (not SFTP or FTP-SSL)                 |
+| Host     | IP shown in the QAM panel                 |
+| Port     | `2121`                                    |
+| Username | `deck` (default — change in Settings)     |
+| Password | `deck` (default — change in Settings)     |
+
+> Prefer no-password access on a trusted home network? Enable **Anonymous access** in Settings and confirm the warning prompt.
 
 ### Recommended FTP clients
 
@@ -121,10 +123,21 @@ You can [download](https://github.com/codevski/decky-ftpd/releases) the latest r
 
 ## Roadmap
 
-- [x] Settings page — custom port, root directory, passive port range
-- [ ] Optional username/password auth
-- [ ] MicroSD card quick-access shortcut
+### Server
+- [x] Settings page, custom port, passive port range
+- [x] Username/password authentication (default on, anonymous opt-in)
 - [ ] Active connection count in the status line
+- [ ] Configurable root directory (reintroduce safely once the symlink edge cases are sorted)
+
+### Client (PSP/3DS Sync)
+- [ ] Pull mode connect to a remote FTP server and mirror a path locally
+- [ ] Configurable remote IP, remote path, and local destination
+- [ ] Remembered last-used remote IP (persisted via settingsManager)
+- [ ] Progress feedback and sync log in QAM
+- [ ] Auto-detect SD card destinations for sync target
+
+### Future
+- [ ] Steam Machine compatibility (dynamic mount point detection)
 
 ## Credits
 
